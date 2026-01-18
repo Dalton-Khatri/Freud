@@ -3,6 +3,9 @@ import random
 import os
 from collections import Counter
 from hierarchical_emotion_classifier import HierarchicalEmotionClassifier
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
 
 TEMPLATE_SADNESS = """SYSTEM: You are Freud, supporting someone experiencing sadness or depression.
 
@@ -307,9 +310,9 @@ def load_templates():
 
 
 def create_hierarchical_dataset(
-    input_file="Dataset.json",
-    output_file="preprocessed_data_hierarchical.json",
-    rejected_file="rejected_data_hierarchical.json"
+    input_file=BASE_DIR / "Dataset.json",
+    output_file=BASE_DIR / "preprocessed_data_hierarchical.json",
+    rejected_file=BASE_DIR / "rejected_data_hierarchical.json"
 ):
     if not os.path.exists(input_file):
         raise FileNotFoundError(f"{input_file} not found!")
@@ -487,15 +490,16 @@ def create_hierarchical_dataset(
 
 def main():
     import sys
-    if not os.path.exists("Dataset.json"):
+
+    if not os.path.exists(BASE_DIR / "Dataset.json"):
         print("\nDataset.json not found!")
         sys.exit(1)
     
     try:
         create_hierarchical_dataset(
-            input_file="Dataset.json",
-            output_file="preprocessed_data_hierarchical.json",
-            rejected_file="rejected_data_hierarchical.json"
+            input_file=BASE_DIR / "Dataset.json",
+            output_file=BASE_DIR / "preprocessed_data_hierarchical.json",
+            rejected_file=BASE_DIR / "rejected_data_hierarchical.json"
         )
         
     except Exception as e:

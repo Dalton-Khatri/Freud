@@ -4,8 +4,8 @@
   "val_samples": 480,
   "model": "EleutherAI/gpt-neo-125M",
   "max_length": 768,
-  "loss_masking": "assistant_answer_only",
-  "answer_format": "<ANSWER> ... </ANSWER>",
+  "loss_masking": "assistant_only",
+  "answer_format": "plain_text",
   "hierarchy_preserved": true,
-  "task": "hierarchical_emotion_dialogue"
+  "task": "mental_health_dialogue"
 }

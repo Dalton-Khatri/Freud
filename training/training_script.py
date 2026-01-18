@@ -106,27 +106,33 @@ training_args = TrainingArguments(
     output_dir=f"{output_dir}/checkpoints",
     overwrite_output_dir=True,
     num_train_epochs=3,
-    per_device_train_batch_size=2,
-    per_device_eval_batch_size=2,
-    gradient_accumulation_steps=8,
+
+    per_device_train_batch_size=8,
+    per_device_eval_batch_size=8,
+    gradient_accumulation_steps=2,
+
     learning_rate=5e-5,
     lr_scheduler_type="cosine",
     warmup_ratio=0.1,
     weight_decay=0.01,
-    fp16=False,
-    logging_dir=f"{output_dir}/logs",
+
+    fp16=True,                      # 🚀 BIG SPEEDUP
     logging_steps=10,
+
     eval_strategy="steps",
     eval_steps=100,
+
     save_strategy="steps",
     save_steps=200,
     save_total_limit=3,
+
     load_best_model_at_end=True,
     metric_for_best_model="eval_loss",
     greater_is_better=False,
+
     report_to="none",
-    dataloader_num_workers=0,  # FIXED: Changed from 2 to 0 to avoid worker issues
-    gradient_checkpointing=True,
+    dataloader_num_workers=2,        # OK now
+    gradient_checkpointing=False,    # 🚀
     optim="adamw_torch"
 )
 
