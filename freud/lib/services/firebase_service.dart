@@ -14,32 +14,62 @@ class FirebaseService {
 
   // ==================== AUTHENTICATION ====================
 
-  // Sign up
+  // Sign up - FIXED VERSION
   Future<void> signUp({
     required String email,
     required String password,
     required String displayName,
   }) async {
-    final userCredential = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      // Create auth account
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    await createUserProfile(
-      email: email,
-      displayName: displayName,
-    );
+      print('User created: ${userCredential.user?.uid}');
+
+      // IMPORTANT: Wait for auth to fully complete
+      await Future.delayed(const Duration(milliseconds: 1000));
+      
+      // Create Firestore profile
+      if (userCredential.user != null) {
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'email': email,
+          'displayName': displayName,
+          'createdAt': FieldValue.serverTimestamp(),
+          'lastActive': FieldValue.serverTimestamp(),
+          'preferences': {
+            'voiceEnabled': false,
+            'theme': 'light',
+            'notificationsEnabled': true,
+          },
+          'moodTracking': [],
+        });
+        
+        print('Profile created for: $displayName');
+      }
+    } catch (e) {
+      print('Signup error: $e');
+      rethrow;
+    }
   }
 
-  // Sign in
+ // Sign in - FIXED VERSION
   Future<void> signIn({
     required String email,
     required String password,
   }) async {
-    await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      print('Login successful');
+    } catch (e) {
+      print('Login error: $e');
+      rethrow;
+    }
   }
 
   // Sign out

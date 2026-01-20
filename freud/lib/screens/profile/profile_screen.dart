@@ -1,9 +1,9 @@
-// lib/screens/profile/profile_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/firebase_service.dart';
 import '../../utils/theme.dart';
+import 'package:freud_mental_health_ai/screens/auth/login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -233,6 +233,13 @@ class ProfileScreen extends StatelessWidget {
 
                         if (shouldLogout == true && context.mounted) {
                           await firebaseService.signOut();
+
+                          if (context.mounted) {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(builder: (context) => LoginScreen()),
+                              (route) => false,
+                            );
+                          }
                         }
                       },
                       icon: const Icon(Icons.logout),
