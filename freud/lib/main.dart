@@ -90,6 +90,7 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder(
       stream: firebaseService.authStateChanges,
       builder: (context, snapshot) {
+        // Show loading while checking auth state
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(
@@ -98,10 +99,19 @@ class AuthWrapper extends StatelessWidget {
           );
         }
         
-        if (snapshot.hasData) {
+        // Debug print to see what's happening
+        print('AuthWrapper - Connection State: ${snapshot.connectionState}');
+        print('AuthWrapper - Has Data: ${snapshot.hasData}');
+        print('AuthWrapper - User: ${snapshot.data?.email}');
+        
+        // User is logged in
+        if (snapshot.hasData && snapshot.data != null) {
+          print('AuthWrapper - Navigating to HomeScreen');
           return const HomeScreen();
         }
         
+        // User is not logged in
+        print('AuthWrapper - Navigating to LoginScreen');
         return const LoginScreen();
       },
     );

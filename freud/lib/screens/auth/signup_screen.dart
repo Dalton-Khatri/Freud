@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/firebase_service.dart';
 import '../../utils/theme.dart';
+import '../home/home_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -43,8 +44,38 @@ class _SignupScreenState extends State<SignupScreen> {
         displayName: _nameController.text.trim(),
       );
       
+      // Success - show message and navigate
       if (mounted) {
-        Navigator.pop(context); // Return to login/home
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account created successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        
+        // Wait a moment for auth state to update
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        // Navigate to HomeScreen
+        print('Navigating to HomeScreen after signup');
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      }
+    } on Exception catch (e) {
+      // Extract the error message from Exception
+      String errorMessage = e.toString().replaceFirst('Exception: ', '');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: AppTheme.errorColor,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -52,6 +83,7 @@ class _SignupScreenState extends State<SignupScreen> {
           SnackBar(
             content: Text('Signup failed: ${e.toString()}'),
             backgroundColor: AppTheme.errorColor,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -225,7 +257,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 
                 // Terms & Privacy
                 Text(
-                  'By signing up, you agree to our Terms of Service and Privacy Policy',
+                  'By signing up, you agree to our Terms fof Service and Privacy Policy',
                   style: TextStyle(
                     color: AppTheme.textLight,
                     fontSize: 12,

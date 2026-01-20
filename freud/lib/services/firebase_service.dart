@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -14,8 +13,8 @@ class FirebaseService {
 
   // ==================== AUTHENTICATION ====================
 
-  // Sign up - FIXED VERSION
-  Future<void> signUp({
+  // Sign up - FIXED VERSION with better error handling
+  Future<UserCredential> signUp({
     required String email,
     required String password,
     required String displayName,
@@ -29,8 +28,8 @@ class FirebaseService {
 
       print('User created: ${userCredential.user?.uid}');
 
-      // IMPORTANT: Wait for auth to fully complete
-      await Future.delayed(const Duration(milliseconds: 1000));
+      // Update display name
+      await userCredential.user?.updateDisplayName(displayName);
       
       // Create Firestore profile
       if (userCredential.user != null) {
@@ -49,26 +48,79 @@ class FirebaseService {
         
         print('Profile created for: $displayName');
       }
+      
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      print('Firebase Auth Error: ${e.code} - ${e.message}');
+      
+      // Provide user-friendly error messages
+      String errorMessage;
+      switch (e.code) {
+        case 'weak-password':
+          errorMessage = 'Password is too weak. Use at least 6 characters.';
+          break;
+        case 'email-already-in-use':
+          errorMessage = 'An account already exists with this email.';
+          break;
+        case 'invalid-email':
+          errorMessage = 'Invalid email address.';
+          break;
+        case 'operation-not-allowed':
+          errorMessage = 'Email/password accounts are not enabled.';
+          break;
+        default:
+          errorMessage = 'Signup failed: ${e.message}';
+      }
+      throw Exception(errorMessage);
     } catch (e) {
       print('Signup error: $e');
-      rethrow;
+      throw Exception('An unexpected error occurred. Please try again.');
     }
   }
 
- // Sign in - FIXED VERSION
-  Future<void> signIn({
+  // Sign in - FIXED VERSION with better error handling
+  Future<UserCredential> signIn({
     required String email,
     required String password,
   }) async {
     try {
-      await _auth.signInWithEmailAndPassword(
+      final userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      print('Login successful');
+      print('Login successful for: ${userCredential.user?.email}');
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      print('Firebase Auth Error: ${e.code} - ${e.message}');
+      
+      // Provide user-friendly error messages
+      String errorMessage;
+      switch (e.code) {
+        case 'user-not-found':
+          errorMessage = 'No account found with this email.';
+          break;
+        case 'wrong-password':
+          errorMessage = 'Incorrect password.';
+          break;
+        case 'invalid-email':
+          errorMessage = 'Invalid email address.';
+          break;
+        case 'user-disabled':
+          errorMessage = 'This account has been disabled.';
+          break;
+        case 'invalid-credential':
+          errorMessage = 'Invalid email or password.';
+          break;
+        case 'too-many-requests':
+          errorMessage = 'Too many failed attempts. Please try again later.';
+          break;
+        default:
+          errorMessage = 'Login failed: ${e.message}';
+      }
+      throw Exception(errorMessage);
     } catch (e) {
       print('Login error: $e');
-      rethrow;
+      throw Exception('An unexpected error occurred. Please try again.');
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/firebase_service.dart';
 import '../../utils/theme.dart';
+import '../home/home_screen.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -36,13 +37,43 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      // Navigation handled by AuthWrapper
+      
+      // Success - give a moment for auth state to update, then navigate
+      print('Login successful - waiting for auth state update');
+      
+      if (mounted) {
+        // Wait a brief moment for Firebase auth state to propagate
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        // The AuthWrapper should handle this, but we'll also manually navigate as backup
+        // This ensures navigation happens even if StreamBuilder doesn't update immediately
+        print('Manually navigating to HomeScreen');
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      }
+      
+    } on Exception catch (e) {
+      // Extract the error message from Exception
+      String errorMessage = e.toString().replaceFirst('Exception: ', '');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: AppTheme.errorColor,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Login failed: ${e.toString()}'),
             backgroundColor: AppTheme.errorColor,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
