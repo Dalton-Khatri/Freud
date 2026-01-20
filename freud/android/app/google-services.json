@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "100354151980",
+    "project_id": "freud-3sem",
+    "storage_bucket": "freud-3sem.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:100354151980:android:5724fd702c50906926a389",
+        "android_client_info": {
+          "package_name": "com.freud.mental_health_ai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "100354151980-v546jg2s4bbkkhkum5gtr1buv3bbja2u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD75FY_vmBlLnpFPvcDdRfo69AHAdWV30U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "100354151980-v546jg2s4bbkkhkum5gtr1buv3bbja2u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
