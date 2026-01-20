@@ -11,9 +11,7 @@ class FirebaseService {
   // Auth state changes stream
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // ==================== AUTHENTICATION ====================
-
-  // Sign up - FIXED VERSION with better error handling
+  // Sign up 
   Future<UserCredential> signUp({
     required String email,
     required String password,
@@ -78,7 +76,7 @@ class FirebaseService {
     }
   }
 
-  // Sign in - FIXED VERSION with better error handling
+  // Sign in 
   Future<UserCredential> signIn({
     required String email,
     required String password,
@@ -128,8 +126,6 @@ class FirebaseService {
   Future<void> signOut() async {
     await _auth.signOut();
   }
-
-  // ==================== USER OPERATIONS ====================
 
   // Create user profile
   Future<void> createUserProfile({
@@ -193,8 +189,6 @@ class FirebaseService {
     if (currentUserId == null) throw Exception('User not authenticated');
     return _firestore.collection('users').doc(currentUserId).snapshots();
   }
-
-  // ==================== CONVERSATION OPERATIONS ====================
 
   // Create conversation
   Future<String> createConversation({required String title}) async {
@@ -261,8 +255,6 @@ class FirebaseService {
     batch.delete(_firestore.collection('conversations').doc(conversationId));
     await batch.commit();
   }
-
-  // ==================== MESSAGE OPERATIONS ====================
 
   // Add message
   Future<void> addMessage({

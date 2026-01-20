@@ -1,4 +1,3 @@
-// lib/screens/auth/signup_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/firebase_service.dart';
@@ -44,7 +43,7 @@ class _SignupScreenState extends State<SignupScreen> {
         displayName: _nameController.text.trim(),
       );
       
-      // Success - show message and navigate
+      // Success
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -54,7 +53,6 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         );
         
-        // Wait a moment for auth state to update
         await Future.delayed(const Duration(milliseconds: 500));
         
         // Navigate to HomeScreen
@@ -65,7 +63,6 @@ class _SignupScreenState extends State<SignupScreen> {
         );
       }
     } on Exception catch (e) {
-      // Extract the error message from Exception
       String errorMessage = e.toString().replaceFirst('Exception: ', '');
       
       if (mounted) {

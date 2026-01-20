@@ -38,15 +38,12 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       
-      // Success - give a moment for auth state to update, then navigate
+      // Success
       print('Login successful - waiting for auth state update');
       
       if (mounted) {
-        // Wait a brief moment for Firebase auth state to propagate
         await Future.delayed(const Duration(milliseconds: 500));
         
-        // The AuthWrapper should handle this, but we'll also manually navigate as backup
-        // This ensures navigation happens even if StreamBuilder doesn't update immediately
         print('Manually navigating to HomeScreen');
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -97,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 60),
                 
-                // Logo/Icon
+                // Icon
                 Container(
                   width: 100,
                   height: 100,
