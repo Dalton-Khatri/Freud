@@ -7,6 +7,7 @@ import '../../utils/theme.dart';
 import '../../widgets/message_bubble.dart';
 import '../../widgets/chat_input.dart';
 import '../../widgets/conversation_feedback_dialog.dart';
+import '../../widgets/crisis_alert_dialog.dart';
 
 class ChatScreen extends StatefulWidget {
   final String conversationId;
@@ -35,8 +36,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _loadConversationDetails() async {
     final firebaseService = Provider.of<FirebaseService>(context, listen: false);
-    final details = await firebaseService.getConversationDetails(widget.conversationId);
-    
+    final details =
+        await firebaseService.getConversationDetails(widget.conversationId);
+
     if (details != null && mounted) {
       setState(() {
         _conversationTitle = details['title'];
@@ -62,9 +64,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<bool> _onWillPop() async {
-    // Only show feedback dialog if:
-    // 1. Title is "New Conversation" (hasn't been named yet)
-    // 2. No feedback has been given yet
     if (_conversationTitle == 'New Conversation' && !_hasFeedback) {
       final result = await showDialog<Map<String, dynamic>?>(
         context: context,
@@ -73,43 +72,58 @@ class _ChatScreenState extends State<ChatScreen> {
       );
 
       if (result != null) {
-        // Save the feedback
-        final firebaseService = Provider.of<FirebaseService>(context, listen: false);
+        final firebaseService =
+            Provider.of<FirebaseService>(context, listen: false);
         await firebaseService.updateConversationDetails(
           conversationId: widget.conversationId,
           name: result['name'],
-          feedback: result['feedback'].isNotEmpty ? result['feedback'] : null,
+          feedback:
+              result['feedback'].isNotEmpty ? result['feedback'] : null,
           rating: result['rating'],
         );
       }
     }
-    
-    return true; // Allow back navigation
+    return true;
   }
 
   Future<void> _handleSendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
-    final firebaseService = Provider.of<FirebaseService>(context, listen: false);
+    final firebaseService =
+        Provider.of<FirebaseService>(context, listen: false);
 
     try {
+      final isCrisis = _aiService.detectCrisis(text);
+
+      // Show crisis alert
+      if (isCrisis && mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const CrisisAlertDialog(),
+        );
+      }
+
       // Add user message
       await firebaseService.addMessage(
         conversationId: widget.conversationId,
         content: text.trim(),
         role: 'user',
+        crisisDetected: isCrisis,
       );
 
       setState(() => _isAITyping = true);
 
-      // Get conversation context
-      final context = await firebaseService.getRecentMessagesForContext(
+      // ⚠️ FIXED: renamed from `context` to `chatContext`
+      final chatContext =
+          await firebaseService.getRecentMessagesForContext(
         conversationId: widget.conversationId,
         limit: 10,
       );
 
       // Get AI response
-      final aiResponse = await _aiService.generateResponse(context);
+      final aiResponse =
+          await _aiService.generateResponse(chatContext);
 
       // Add AI message
       await firebaseService.addMessage(
@@ -119,12 +133,14 @@ class _ChatScreenState extends State<ChatScreen> {
       );
 
       setState(() => _isAITyping = false);
-      
-      // Scroll to bottom after messages are added
-      Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
+
+      Future.delayed(
+        const Duration(milliseconds: 100),
+        _scrollToBottom,
+      );
     } catch (e) {
       setState(() => _isAITyping = false);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -154,8 +170,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   _showDeleteDialog();
                 }
               },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
+              itemBuilder: (context) => const [
+                PopupMenuItem(
                   value: 'rename',
                   child: Row(
                     children: [
@@ -165,7 +181,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ],
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [
@@ -181,29 +197,32 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         body: Column(
           children: [
-            // Messages List
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: firebaseService.getMessages(widget.conversationId),
+                stream:
+                    firebaseService.getMessages(widget.conversationId),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                  if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const Center(
+                        child: CircularProgressIndicator());
                   }
 
                   if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
+                    return Center(
+                        child: Text('Error: ${snapshot.error}'));
                   }
 
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  if (!snapshot.hasData ||
+                      snapshot.data!.docs.isEmpty) {
                     return Center(
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment:
+                            MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.waving_hand,
-                            size: 60,
-                            color: AppTheme.primaryColor,
-                          ),
+                          Icon(Icons.waving_hand,
+                              size: 60,
+                              color: AppTheme.primaryColor),
                           const SizedBox(height: 16),
                           Text(
                             'Hi! I\'m Freud',
@@ -226,61 +245,42 @@ class _ChatScreenState extends State<ChatScreen> {
                     );
                   }
 
-                  final messages = snapshot.data!.docs;
-
-                  // Auto-scroll when new messages arrive
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                  WidgetsBinding.instance
+                      .addPostFrameCallback((_) {
                     _scrollToBottom();
                   });
+
+                  final messages = snapshot.data!.docs;
 
                   return ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
-                      final doc = messages[index];
-                      final data = doc.data() as Map<String, dynamic>;
-                      
+                      final data =
+                          messages[index].data()
+                              as Map<String, dynamic>;
+
                       return MessageBubble(
                         message: data['content'] ?? '',
                         isUser: data['role'] == 'user',
-                        timestamp: data['timestamp'] as Timestamp?,
+                        timestamp:
+                            data['timestamp'] as Timestamp?,
                       );
                     },
                   );
                 },
               ),
             ),
-
-            // AI Typing Indicator
             if (_isAITyping)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.aiMessageColor,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: AppTheme.softShadow,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildTypingDot(0),
-                          const SizedBox(width: 4),
-                          _buildTypingDot(1),
-                          const SizedBox(width: 4),
-                          _buildTypingDot(2),
-                        ],
-                      ),
-                    ),
-                  ],
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text(
+                  'Freud is typing...',
+                  style: TextStyle(
+                      color: AppTheme.textSecondary),
                 ),
               ),
-
-            // Chat Input
             ChatInput(
               onSend: _handleSendMessage,
               enabled: !_isAITyping,
@@ -291,36 +291,13 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildTypingDot(int index) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 600),
-      builder: (context, value, child) {
-        final offset = (index * 0.2);
-        final animation = (value + offset) % 1.0;
-        final opacity = (animation < 0.5) 
-            ? animation * 2 
-            : 2 - (animation * 2);
-        
-        return Opacity(
-          opacity: opacity.clamp(0.3, 1.0),
-          child: Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   void _showRenameDialog() async {
-    final firebaseService = Provider.of<FirebaseService>(context, listen: false);
-    final details = await firebaseService.getConversationDetails(widget.conversationId);
-    
+    final firebaseService =
+        Provider.of<FirebaseService>(context, listen: false);
+    final details =
+        await firebaseService.getConversationDetails(
+            widget.conversationId);
+
     if (!mounted) return;
 
     final result = await showDialog<Map<String, dynamic>?>(
@@ -336,7 +313,8 @@ class _ChatScreenState extends State<ChatScreen> {
       await firebaseService.updateConversationDetails(
         conversationId: widget.conversationId,
         name: result['name'],
-        feedback: result['feedback'].isNotEmpty ? result['feedback'] : null,
+        feedback:
+            result['feedback'].isNotEmpty ? result['feedback'] : null,
         rating: result['rating'],
       );
 
@@ -344,13 +322,6 @@ class _ChatScreenState extends State<ChatScreen> {
         _conversationTitle = result['name'];
         _hasFeedback = true;
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Conversation updated successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
     }
   }
 
@@ -360,8 +331,7 @@ class _ChatScreenState extends State<ChatScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Delete Conversation'),
         content: const Text(
-          'Are you sure you want to delete this conversation? This action cannot be undone.',
-        ),
+            'This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -369,22 +339,18 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           TextButton(
             onPressed: () async {
-              final firebaseService = Provider.of<FirebaseService>(
-                context,
-                listen: false,
-              );
-              
-              await firebaseService.deleteConversation(widget.conversationId);
-              
+              final firebaseService =
+                  Provider.of<FirebaseService>(context,
+                      listen: false);
+              await firebaseService
+                  .deleteConversation(widget.conversationId);
               if (mounted) {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Return to home
+                Navigator.pop(context);
+                Navigator.pop(context);
               }
             },
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Delete',
+                style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

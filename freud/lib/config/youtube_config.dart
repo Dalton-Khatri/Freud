@@ -4,7 +4,7 @@ class YouTubeConfig {
     'happy': [
       VideoLink(
         title: 'Uplifting Music for Happy Moments',
-        url: 'https://www.youtube.com/watch?v=aqCxlxclyzo', // Replace with your unlisted playlist link
+        url: 'https://www.youtube.com/watch?v=aqCxlxclyzo',
       ),
       VideoLink(
         title: 'Feel-Good Vibes Playlist',

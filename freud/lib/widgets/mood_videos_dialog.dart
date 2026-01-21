@@ -1,4 +1,3 @@
-// lib/widgets/mood_videos_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../config/youtube_config.dart';
