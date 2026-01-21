@@ -11,7 +11,9 @@ class FirebaseService {
   // Auth state changes stream
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Sign up 
+  // ==================== AUTHENTICATION ====================
+
+  // Sign up - FIXED VERSION with better error handling
   Future<UserCredential> signUp({
     required String email,
     required String password,
@@ -76,7 +78,7 @@ class FirebaseService {
     }
   }
 
-  // Sign in 
+  // Sign in - FIXED VERSION with better error handling
   Future<UserCredential> signIn({
     required String email,
     required String password,
@@ -126,6 +128,8 @@ class FirebaseService {
   Future<void> signOut() async {
     await _auth.signOut();
   }
+
+  // ==================== USER OPERATIONS ====================
 
   // Create user profile
   Future<void> createUserProfile({
@@ -190,6 +194,8 @@ class FirebaseService {
     return _firestore.collection('users').doc(currentUserId).snapshots();
   }
 
+  // ==================== CONVERSATION OPERATIONS ====================
+
   // Create conversation
   Future<String> createConversation({required String title}) async {
     if (currentUserId == null) throw Exception('User not authenticated');
@@ -224,6 +230,44 @@ class FirebaseService {
         .snapshots();
   }
 
+  // Update conversation with name, feedback, and rating
+  Future<void> updateConversationDetails({
+    required String conversationId,
+    String? name,
+    String? feedback,
+    int? rating,
+  }) async {
+    if (currentUserId == null) throw Exception('User not authenticated');
+
+    final Map<String, dynamic> updates = {
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    if (name != null) {
+      updates['title'] = name;
+    }
+    if (feedback != null) {
+      updates['feedback'] = feedback;
+    }
+    if (rating != null) {
+      updates['rating'] = rating;
+    }
+
+    await _firestore.collection('conversations').doc(conversationId).update(updates);
+  }
+
+  // Get conversation details
+  Future<Map<String, dynamic>?> getConversationDetails(String conversationId) async {
+    if (currentUserId == null) throw Exception('User not authenticated');
+
+    final doc = await _firestore.collection('conversations').doc(conversationId).get();
+    
+    if (doc.exists) {
+      return doc.data();
+    }
+    return null;
+  }
+
   // Update conversation
   Future<void> updateConversation({
     required String conversationId,
@@ -255,6 +299,8 @@ class FirebaseService {
     batch.delete(_firestore.collection('conversations').doc(conversationId));
     await batch.commit();
   }
+
+  // ==================== MESSAGE OPERATIONS ====================
 
   // Add message
   Future<void> addMessage({

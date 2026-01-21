@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/firebase_service.dart';
 import '../../utils/theme.dart';
 import '../../widgets/conversation_card.dart';
+import '../../widgets/mood_videos_dialog.dart';
 import '../chat/chat_screen.dart';
 import '../profile/profile_screen.dart';
 
@@ -52,6 +53,16 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     }
+  }
+
+  void _showMoodVideos(String mood, String emoji) {
+    showDialog(
+      context: context,
+      builder: (context) => MoodVideosDialog(
+        mood: mood,
+        emoji: emoji,
+      ),
+    );
   }
 
   @override
@@ -226,8 +237,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: () async {
         final firebaseService = Provider.of<FirebaseService>(context, listen: false);
+        
+        // Log mood
         await firebaseService.addMoodEntry(mood: label.toLowerCase());
         
+        // Show snackbar
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -236,6 +250,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         }
+        
+        // Show video recommendations
+        _showMoodVideos(label, emoji);
       },
       child: Column(
         children: [
