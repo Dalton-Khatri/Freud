@@ -1,7 +1,18 @@
+// lib/services/ai_service.dart
+// FOR FASTAPI BACKEND
+
+import 'dart:async';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class AIService {
- 
+  // Your backend URL (FastAPI endpoint hosted on HF Space)
+  static const String backendUrl = 'https://dalton-khatri-freud-ai.hf.space';
+
+  static const int timeout = 60;
+  static const bool debugMode = true;
+
+  // Crisis handling
   static const String _crisisMessage = """
 I'm concerned about what you're sharing. Please know that you're not alone, and there are people who can help immediately.
 
@@ -18,206 +29,138 @@ If you're in immediate danger, please:
 I'm here to support you, but professional help is crucial right now. Please consider calling one of these numbers.""";
 
   static final List<String> _crisisKeywords = [
-    // English
-    'suicide', 'kill myself', 'end it all', 'want to die', 
+    'suicide', 'kill myself', 'end it all', 'want to die',
     'self harm', 'hurt myself', 'no reason to live',
     'better off dead', 'end my life', 'take my life',
-    
-    // Nepali (romanized)
     'aatmahatya', 'marnu', 'jeevan sakaunu',
   ];
 
-  String _detectEmotion(String message) {
-    final lowerMessage = message.toLowerCase();
-    
-    // Sadness indicators
-    if (lowerMessage.contains(RegExp(r'\b(sad|lonely|empty|depressed|down|hopeless|cry|tears|crying)\b'))) {
-      return 'sad';
-    }
-    
-    // Anxiety indicators
-    if (lowerMessage.contains(RegExp(r'\b(anxious|anxiety|worry|worried|nervous|panic|scared|afraid|fear)\b'))) {
-      return 'anxious';
-    }
-    
-    // Stress indicators
-    if (lowerMessage.contains(RegExp(r'\b(stress|stressed|overwhelm|overwhelmed|pressure|exhausted|tired|exam|exams|test|deadline)\b'))) {
-      return 'stressed';
-    }
-    
-    // Anger indicators
-    if (lowerMessage.contains(RegExp(r'\b(angry|mad|furious|frustrated|irritated|annoyed)\b'))) {
-      return 'angry';
-    }
-    
-    // Happiness indicators
-    if (lowerMessage.contains(RegExp(r'\b(happy|joy|joyful|excited|great|good|wonderful|amazing)\b'))) {
-      return 'happy';
-    }
-    
-    // Default
-    return 'neutral';
-  }
   bool detectCrisis(String message) {
     final lowerMessage = message.toLowerCase();
     return _crisisKeywords.any((keyword) => lowerMessage.contains(keyword));
   }
 
+  String _detectEmotion(String message) {
+    final lowerMessage = message.toLowerCase();
+
+    if (lowerMessage.contains(RegExp(r'\b(sad|lonely|empty|depressed|down|hopeless|cry|tears)\b'))) {
+      return 'sad';
+    }
+    if (lowerMessage.contains(RegExp(r'\b(anxious|anxiety|worry|worried|nervous|panic|scared|afraid|fear)\b'))) {
+      return 'anxious';
+    }
+    if (lowerMessage.contains(RegExp(r'\b(stress|stressed|overwhelm|overwhelmed|pressure|exhausted|tired)\b'))) {
+      return 'stressed';
+    }
+    if (lowerMessage.contains(RegExp(r'\b(angry|mad|furious|frustrated|irritated|annoyed)\b'))) {
+      return 'angry';
+    }
+    if (lowerMessage.contains(RegExp(r'\b(happy|joy|joyful|excited|great|good|wonderful|amazing)\b'))) {
+      return 'happy';
+    }
+    return 'neutral';
+  }
+
+  String _buildPrompt(List<Map<String, dynamic>> context) {
+    final StringBuffer prompt = StringBuffer();
+
+    prompt.writeln('<|system|>: You are Freud, a calm, empathetic therapeutic AI assistant.');
+
+    for (var message in context.take(10)) {
+      final role = message['role'];
+      final content = message['content'];
+
+      if (role == 'user') {
+        final emotion = _detectEmotion(content);
+        prompt.writeln('<|user|>:');
+        prompt.writeln('[emotion: $emotion]');
+        prompt.writeln(content);
+      } else if (role == 'assistant') {
+        prompt.writeln('<|assistant|>:');
+        prompt.writeln(content);
+      }
+    }
+
+    prompt.write('<|assistant|>:\n');
+    return prompt.toString();
+  }
+
   Future<String> generateResponse(List<Map<String, dynamic>> context) async {
     try {
-      // Get the last user message
       final lastUserMessage = context.lastWhere(
         (msg) => msg['role'] == 'user',
         orElse: () => {'content': ''},
       )['content'] as String;
 
-      // CRISIS DETECTION
+      // Crisis check
       if (detectCrisis(lastUserMessage)) {
         return _crisisMessage;
       }
 
-      // Detect emotion
-      final emotion = _detectEmotion(lastUserMessage);
-      
-      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      print('💭 User Message: $lastUserMessage');
-      print('🎭 Detected Emotion: $emotion');
-      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      final prompt = _buildPrompt(context);
 
-      // Generate context-aware response
-      return _generateContextualResponse(lastUserMessage, emotion, context);
-      
+      if (debugMode) {
+        print('📤 Sending to: $backendUrl/generate');
+      }
+
+      // Call FastAPI endpoint
+      final response = await http.post(
+        Uri.parse('$backendUrl/generate'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'prompt': prompt,
+          'max_tokens': 150,
+          'temperature': 0.7,
+        }),
+      ).timeout(Duration(seconds: timeout));
+
+      if (debugMode) {
+        print('📥 Status: ${response.statusCode}');
+        print('📥 Body: ${response.body}');
+      }
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        String generatedText = data['response'] ?? '';
+
+        if (generatedText.isEmpty || generatedText.startsWith('Error:')) {
+          return _getFallbackResponse(context);
+        }
+
+        return generatedText;
+
+      } else if (response.statusCode == 503) {
+        return "I'm waking up! Please try again in a moment.";
+      } else {
+        print('❌ Error ${response.statusCode}');
+        return _getFallbackResponse(context);
+      }
+
+    } on TimeoutException {
+      return "I'm taking longer than usual. Please try again.";
     } catch (e) {
-      print('💥 AI Service Error: $e');
-      return "I'm here to listen. Can you tell me more about how you're feeling?";
+      print('💥 Error: $e');
+      return _getFallbackResponse(context);
     }
   }
 
-  String _generateContextualResponse(
-    String message,
-    String emotion,
-    List<Map<String, dynamic>> context,
-  ) {
-    final lowerMessage = message.toLowerCase();
-    final conversationLength = context.length;
-    
-    // First message
-    if (conversationLength <= 2) {
-      return _getGreetingResponse(emotion);
+  String _getFallbackResponse(List<Map<String, dynamic>> context) {
+    if (context.isEmpty) {
+      return "Hello! I'm Freud, your AI companion for mental wellness. I'm here to listen and support you. How are you feeling today?";
     }
-    
-    // Emotion-specific responses
-    switch (emotion) {
-      case 'stressed':
-        return _getStressResponse(lowerMessage);
-      
-      case 'anxious':
-        return _getAnxietyResponse(lowerMessage);
-      
-      case 'sad':
-        return _getSadnessResponse(lowerMessage);
-      
-      case 'angry':
-        return _getAngerResponse(lowerMessage);
-      
-      case 'happy':
-        return _getHappinessResponse(lowerMessage);
-      
-      default:
-        return _getNeutralResponse(lowerMessage);
+
+    final lastMessage = context.last['content'].toString().toLowerCase();
+
+    if (lastMessage.contains(RegExp(r'\b(anxious|anxiety|worry)\b'))) {
+      return "I understand you're feeling anxious. That can be really overwhelming. Would you like to try a simple breathing exercise? Take a deep breath in for 4 counts, hold for 4, and exhale for 4.";
+    } else if (lastMessage.contains(RegExp(r'\b(sad|depressed|down|lonely)\b'))) {
+      return "I hear that you're going through a difficult time. It's okay to feel this way. Would you like to talk about what's making you feel sad?";
+    } else if (lastMessage.contains(RegExp(r'\b(stressed|overwhelm)\b'))) {
+      return "Stress can be really challenging. Let's work through this together. What's the main source of your stress right now?";
+    } else if (lastMessage.contains(RegExp(r'\b(happy|good|great|wonderful)\b'))) {
+      return "That's wonderful to hear! I'm glad you're feeling positive. Would you like to share what's bringing you joy?";
+    } else {
+      return "Thank you for sharing that with me. I'm listening. Can you tell me more about how you're feeling?";
     }
-  }
-
-  String _getGreetingResponse(String emotion) {
-    final greetings = [
-      "Hello! I'm Freud, your AI companion for mental wellness. I'm here to listen and support you. How are you feeling today?",
-      "Hi there! I'm glad you reached out. I'm here to listen without judgment. What's on your mind?",
-      "Welcome! This is a safe space for you to share your thoughts and feelings. How can I support you today?",
-    ];
-    return greetings[DateTime.now().millisecond % greetings.length];
-  }
-
-  String _getStressResponse(String message) {
-    if (message.contains('exam') || message.contains('test') || message.contains('study')) {
-      final responses = [
-        "Exam stress is really common, and it's understandable you're feeling this way. Have you tried breaking your study time into smaller, manageable chunks? Sometimes taking short breaks can help you feel more in control.",
-        "I hear you - exam pressure can feel overwhelming. Remember, your worth isn't determined by exam results. Would you like to talk about specific subjects that are worrying you?",
-        "Feeling stressed about exams shows you care about doing well, which is natural. What's the biggest challenge you're facing with your preparation right now?",
-      ];
-      return responses[DateTime.now().millisecond % responses.length];
-    }
-    
-    if (message.contains('work') || message.contains('job')) {
-      return "Work stress can be really draining. It's important to set boundaries and take time for yourself. What aspect of work is causing you the most stress right now?";
-    }
-    
-    final generalStress = [
-      "Stress can feel overwhelming, but talking about it is a great first step. Let's work through this together. What's weighing on you most heavily?",
-      "I understand you're going through a stressful time. Would it help to talk about what's causing this stress? Sometimes just expressing it can provide some relief.",
-      "Feeling stressed is your mind and body's way of responding to pressure. Let's explore what's triggering these feelings and find ways to manage them.",
-    ];
-    return generalStress[DateTime.now().millisecond % generalStress.length];
-  }
-
-  String _getAnxietyResponse(String message) {
-    final responses = [
-      "Anxiety can be really difficult to manage. Have you tried grounding exercises? One simple technique is the 5-4-3-2-1 method: notice 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste.",
-      "I hear that you're feeling anxious. Remember, anxiety is often our mind trying to protect us, but sometimes it can be overwhelming. Would you like to talk about what's triggering these feelings?",
-      "Dealing with anxiety isn't easy, and I'm glad you're reaching out. Deep breathing can help - try breathing in for 4 counts, holding for 4, and exhaling for 4. What specific situations make you feel most anxious?",
-      "Your feelings of anxiety are valid. Sometimes writing down your worries can help. What's been making you feel most worried lately?",
-    ];
-    return responses[DateTime.now().millisecond % responses.length];
-  }
-
-  String _getSadnessResponse(String message) {
-    if (message.contains('lonely') || message.contains('alone')) {
-      return "Feeling lonely is really hard, and I'm sorry you're experiencing this. Please know that reaching out like this takes courage. You're not truly alone - I'm here to listen, and there are people who care about you. Would you like to talk about what's been making you feel this way?";
-    }
-    
-    final responses = [
-      "I hear that you're feeling sad. It's okay to feel this way - sadness is a natural emotion. Would you like to share what's been bringing you down?",
-      "Sadness can feel heavy, but remember it's temporary. I'm here to listen. What's been on your mind lately?",
-      "I'm sorry you're going through this difficult time. Your feelings are valid. Sometimes it helps to express them. What's been making you feel sad?",
-      "Thank you for sharing how you feel. Sadness is part of being human. Would it help to talk about what triggered these feelings?",
-    ];
-    return responses[DateTime.now().millisecond % responses.length];
-  }
-
-  String _getAngerResponse(String message) {
-    final responses = [
-      "It sounds like you're dealing with some frustrating situations. Anger is a valid emotion, and it's important to acknowledge it. What's been making you feel this way?",
-      "I can sense your frustration. Sometimes anger is masking other emotions like hurt or disappointment. Would you like to explore what's really bothering you?",
-      "Feeling angry is okay - it's a natural response to certain situations. What would help you feel better right now?",
-    ];
-    return responses[DateTime.now().millisecond % responses.length];
-  }
-
-  String _getHappinessResponse(String message) {
-    final responses = [
-      "That's wonderful to hear! I'm so glad you're feeling positive. What's been bringing you joy?",
-      "It's great that you're feeling good! Positive emotions are important to celebrate. What happened that made you feel this way?",
-      "I love hearing that you're in good spirits! Would you like to share what's making you happy?",
-    ];
-    return responses[DateTime.now().millisecond % responses.length];
-  }
-
-  String _getNeutralResponse(String message) {
-    // Check for questions
-    if (message.contains('?')) {
-      return "That's an important question. Let me understand better - can you tell me more about what's on your mind?";
-    }
-    
-    // Check for short responses
-    if (message.split(' ').length <= 3) {
-      return "I'm listening. Would you like to tell me more about that?";
-    }
-    
-    final responses = [
-      "Thank you for sharing that with me. I'm here to listen. Can you tell me more about how this makes you feel?",
-      "I appreciate you opening up. How does this situation affect you emotionally?",
-      "I'm here with you. What else would you like to talk about?",
-      "That sounds like something important to you. Would you like to explore this further?",
-    ];
-    return responses[DateTime.now().millisecond % responses.length];
   }
 }

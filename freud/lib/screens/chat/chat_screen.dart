@@ -114,14 +114,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
       setState(() => _isAITyping = true);
 
-      // ⚠️ FIXED: renamed from `context` to `chatContext`
       final chatContext =
           await firebaseService.getRecentMessagesForContext(
         conversationId: widget.conversationId,
         limit: 10,
       );
 
-      // Get AI response
+      // 🔥 IMPORTANT: this will call /generate endpoint internally
       final aiResponse =
           await _aiService.generateResponse(chatContext);
 
