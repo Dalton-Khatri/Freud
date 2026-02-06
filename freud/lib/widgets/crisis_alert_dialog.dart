@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 import '../utils/theme.dart';
 
 class CrisisAlertDialog extends StatelessWidget {
   const CrisisAlertDialog({super.key});
 
-  Future<void> _makePhoneCall(String phoneNumber) async {
-    final uri = Uri(scheme: 'tel', path: phoneNumber);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
+  void _copyToClipboard(BuildContext context, String number) {
+    Clipboard.setData(ClipboardData(text: number));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$number copied to clipboard'),
+        duration: const Duration(seconds: 2),
+        backgroundColor: AppTheme.successColor,
+      ),
+    );
   }
 
   @override
@@ -129,6 +133,7 @@ class CrisisAlertDialog extends StatelessWidget {
                     const SizedBox(height: 16),
 
                     _buildHelplineCard(
+                      context,
                       title: 'National Mental Health Helpline',
                       number: '1660 0102005',
                       icon: Icons.psychology,
@@ -138,6 +143,7 @@ class CrisisAlertDialog extends StatelessWidget {
                     const SizedBox(height: 12),
 
                     _buildHelplineCard(
+                      context,
                       title: 'TPO Nepal',
                       number: '9840021600',
                       icon: Icons.favorite,
@@ -147,6 +153,7 @@ class CrisisAlertDialog extends StatelessWidget {
                     const SizedBox(height: 12),
 
                     _buildHelplineCard(
+                      context,
                       title: 'CMC Nepal',
                       number: '014102037',
                       icon: Icons.support_agent,
@@ -170,6 +177,7 @@ class CrisisAlertDialog extends StatelessWidget {
                       children: [
                         Expanded(
                           child: _buildEmergencyCard(
+                            context,
                             title: 'Police',
                             number: '100',
                             icon: Icons.local_police,
@@ -178,6 +186,7 @@ class CrisisAlertDialog extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildEmergencyCard(
+                            context,
                             title: 'Ambulance',
                             number: '102',
                             icon: Icons.local_hospital,
@@ -213,14 +222,15 @@ class CrisisAlertDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildHelplineCard({
+  Widget _buildHelplineCard(
+    BuildContext context, {
     required String title,
     required String number,
     required IconData icon,
     required Color color,
   }) {
     return InkWell(
-      onTap: () => _makePhoneCall(number),
+      onTap: () => _copyToClipboard(context, number),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -265,20 +275,21 @@ class CrisisAlertDialog extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.phone, color: color),
+            Icon(Icons.copy, color: color, size: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildEmergencyCard({
+  Widget _buildEmergencyCard(
+    BuildContext context, {
     required String title,
     required String number,
     required IconData icon,
   }) {
     return InkWell(
-      onTap: () => _makePhoneCall(number),
+      onTap: () => _copyToClipboard(context, number),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),

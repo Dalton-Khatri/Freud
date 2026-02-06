@@ -174,6 +174,26 @@ class FirebaseService {
     }, SetOptions(merge: true));
   }
 
+  // Delete mood entry
+  Future<void> deleteMoodEntry(int index) async {
+    if (currentUserId == null) throw Exception('User not authenticated');
+
+    final userDoc = await _firestore.collection('users').doc(currentUserId).get();
+    
+    if (userDoc.exists) {
+      final data = userDoc.data() as Map<String, dynamic>;
+      final moodTracking = List.from(data['moodTracking'] ?? []);
+      
+      if (index >= 0 && index < moodTracking.length) {
+        moodTracking.removeAt(index);
+        
+        await _firestore.collection('users').doc(currentUserId).update({
+          'moodTracking': moodTracking,
+        });
+      }
+    }
+  }
+
   // Update preferences
   Future<void> updatePreferences(Map<String, dynamic> preferences) async {
     if (currentUserId == null) throw Exception('User not authenticated');
@@ -206,6 +226,7 @@ class FirebaseService {
       'lastMessage': '',
       'messageCount': 0,
       'ttlExpiry': ttlExpiry,
+      'isSaved': false, // Add default value for saved status
     });
 
     return conversationRef.id;
@@ -291,6 +312,29 @@ class FirebaseService {
     batch.delete(_firestore.collection('conversations').doc(conversationId));
     await batch.commit();
   }
+
+  // Toggle save/bookmark conversation
+  Future<void> toggleSaveConversation(String conversationId, bool isSaved) async {
+    if (currentUserId == null) throw Exception('User not authenticated');
+
+    await _firestore.collection('conversations').doc(conversationId).update({
+      'isSaved': isSaved,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Get saved conversations
+  Stream<QuerySnapshot> getSavedConversations() {
+    if (currentUserId == null) throw Exception('User not authenticated');
+
+    return _firestore
+        .collection('conversations')
+        .where('userId', isEqualTo: currentUserId)
+        .where('isSaved', isEqualTo: true)
+        .orderBy('updatedAt', descending: true)
+        .snapshots();
+  }
+
   // Add message
   Future<void> addMessage({
     required String conversationId,

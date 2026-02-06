@@ -56,13 +56,14 @@ class _ConversationFeedbackDialogState extends State<ConversationFeedbackDialog>
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      backgroundColor: const Color(0xFF0A0A0A),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
       ),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 400),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF0A0A0A),
           borderRadius: BorderRadius.circular(24),
         ),
         child: SingleChildScrollView(
@@ -88,7 +89,7 @@ class _ConversationFeedbackDialogState extends State<ConversationFeedbackDialog>
                         width: 64,
                         height: 64,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          gradient: AppTheme.primaryGradient,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -132,31 +133,33 @@ class _ConversationFeedbackDialogState extends State<ConversationFeedbackDialog>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: Colors.white.withOpacity(0.9),
                         ),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _nameController,
+                        style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           hintText: 'E.g., "Evening Reflection", "Stress Relief"',
+                          hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
                           filled: true,
-                          fillColor: AppTheme.backgroundColor,
+                          fillColor: const Color(0xFF111111),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: AppTheme.borderColor),
+                            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: AppTheme.borderColor),
+                            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+                            borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2),
                           ),
                           errorBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: AppTheme.errorColor),
+                            borderSide: const BorderSide(color: Colors.red),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -179,7 +182,7 @@ class _ConversationFeedbackDialogState extends State<ConversationFeedbackDialog>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: Colors.white.withOpacity(0.9),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -203,14 +206,17 @@ class _ConversationFeedbackDialogState extends State<ConversationFeedbackDialog>
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
+                                gradient: isSelected
+                                    ? AppTheme.primaryGradient
+                                    : null,
                                 color: isSelected
-                                    ? AppTheme.primaryColor
-                                    : AppTheme.backgroundColor,
+                                    ? null
+                                    : const Color(0xFF111111),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   color: isSelected
-                                      ? AppTheme.primaryColor
-                                      : AppTheme.borderColor,
+                                      ? const Color(0xFF6C63FF)
+                                      : Colors.white.withOpacity(0.1),
                                   width: 2,
                                 ),
                               ),
@@ -222,7 +228,7 @@ class _ConversationFeedbackDialogState extends State<ConversationFeedbackDialog>
                                     fontWeight: FontWeight.w600,
                                     color: isSelected
                                         ? Colors.white
-                                        : AppTheme.textPrimary,
+                                        : Colors.white.withOpacity(0.7),
                                   ),
                                 ),
                               ),
@@ -237,7 +243,7 @@ class _ConversationFeedbackDialogState extends State<ConversationFeedbackDialog>
                           _getRatingMessage(_selectedRating!),
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppTheme.textSecondary,
+                            color: Colors.white.withOpacity(0.5),
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -251,28 +257,30 @@ class _ConversationFeedbackDialogState extends State<ConversationFeedbackDialog>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: Colors.white.withOpacity(0.9),
                         ),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _feedbackController,
                         maxLines: 4,
+                        style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           hintText: 'Share your thoughts about this conversation...',
+                          hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
                           filled: true,
-                          fillColor: AppTheme.backgroundColor,
+                          fillColor: const Color(0xFF111111),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: AppTheme.borderColor),
+                            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: AppTheme.borderColor),
+                            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+                            borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2),
                           ),
                           contentPadding: const EdgeInsets.all(16),
                         ),
@@ -288,7 +296,8 @@ class _ConversationFeedbackDialogState extends State<ConversationFeedbackDialog>
                               onPressed: _handleSkip,
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 16),
-                                side: BorderSide(color: AppTheme.borderColor),
+                                side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                                foregroundColor: Colors.white.withOpacity(0.7),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -302,7 +311,7 @@ class _ConversationFeedbackDialogState extends State<ConversationFeedbackDialog>
                             child: ElevatedButton(
                               onPressed: _handleSubmit,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryColor,
+                                backgroundColor: const Color(0xFF6C63FF),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(

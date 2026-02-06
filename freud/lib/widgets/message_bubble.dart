@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../utils/theme.dart';
+import '../services/firebase_service.dart';
 
-class MessageBubble extends StatelessWidget {
+class MessageBubble extends StatefulWidget {
   final String message;
   final bool isUser;
   final Timestamp? timestamp;
@@ -14,6 +16,35 @@ class MessageBubble extends StatelessWidget {
     required this.isUser,
     this.timestamp,
   });
+
+  @override
+  State<MessageBubble> createState() => _MessageBubbleState();
+}
+
+class _MessageBubbleState extends State<MessageBubble> {
+  String _userInitial = 'U';
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isUser) {
+      _loadUserInitial();
+    }
+  }
+
+  Future<void> _loadUserInitial() async {
+    final firebaseService = Provider.of<FirebaseService>(context, listen: false);
+    
+    firebaseService.getUserProfile().listen((snapshot) {
+      if (snapshot.exists && mounted) {
+        final userData = snapshot.data() as Map<String, dynamic>;
+        final displayName = userData['displayName'] ?? 'User';
+        setState(() {
+          _userInitial = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U';
+        });
+      }
+    });
+  }
 
   String _formatTime(Timestamp? timestamp) {
     if (timestamp == null) return '';
@@ -27,11 +58,11 @@ class MessageBubble extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+            widget.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // AI Avatar
-          if (!isUser) ...[
+          // AI Avatar (Freud - "F")
+          if (!widget.isUser) ...[
             Container(
               width: 36,
               height: 36,
@@ -39,10 +70,12 @@ class MessageBubble extends StatelessWidget {
                 gradient: AppTheme.primaryGradient,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.psychology,
-                color: Colors.white,
-                size: 20,
+              child: const Center(
+                child: Icon(
+                  Icons.psychology_outlined,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -52,7 +85,7 @@ class MessageBubble extends StatelessWidget {
           Flexible(
             child: Column(
               crossAxisAlignment:
-                  isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  widget.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -60,32 +93,37 @@ class MessageBubble extends StatelessWidget {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: isUser
-                        ? AppTheme.userMessageColor
-                        : AppTheme.aiMessageColor,
+                    gradient: widget.isUser ? AppTheme.primaryGradient : null,
+                    color: widget.isUser
+                        ? null
+                        : const Color(0xFF111111),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       topRight: const Radius.circular(16),
-                      bottomLeft: Radius.circular(isUser ? 16 : 4),
-                      bottomRight: Radius.circular(isUser ? 4 : 16),
+                      bottomLeft: Radius.circular(widget.isUser ? 16 : 4),
+                      bottomRight: Radius.circular(widget.isUser ? 4 : 16),
                     ),
-                    boxShadow: AppTheme.softShadow,
+                    border: widget.isUser
+                        ? null
+                        : Border.all(
+                            color: Colors.white.withOpacity(0.05),
+                          ),
                   ),
                   child: Text(
-                    message,
+                    widget.message,
                     style: TextStyle(
-                      color: isUser ? Colors.white : AppTheme.textPrimary,
+                      color: widget.isUser ? Colors.white : Colors.white,
                       fontSize: 15,
                       height: 1.4,
                     ),
                   ),
                 ),
-                if (timestamp != null) ...[
+                if (widget.timestamp != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    _formatTime(timestamp),
+                    _formatTime(widget.timestamp),
                     style: TextStyle(
-                      color: AppTheme.textLight,
+                      color: Colors.white.withOpacity(0.3),
                       fontSize: 11,
                     ),
                   ),
@@ -94,8 +132,8 @@ class MessageBubble extends StatelessWidget {
             ),
           ),
 
-          // User Avatar
-          if (isUser) ...[
+          // User Avatar (User's Initial)
+          if (widget.isUser) ...[
             const SizedBox(width: 12),
             Container(
               width: 36,
@@ -104,10 +142,15 @@ class MessageBubble extends StatelessWidget {
                 color: AppTheme.accentColor,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 20,
+              child: Center(
+                child: Text(
+                  _userInitial,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
           ],

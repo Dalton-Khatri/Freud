@@ -120,7 +120,7 @@ class _ChatScreenState extends State<ChatScreen> {
         limit: 10,
       );
 
-      // 🔥 IMPORTANT: this will call /generate endpoint internally
+      // Call AI service to generate response
       final aiResponse =
           await _aiService.generateResponse(chatContext);
 
@@ -158,10 +158,16 @@ class _ChatScreenState extends State<ChatScreen> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
+        backgroundColor: const Color(0xFF0A0A0A),
         appBar: AppBar(
-          title: const Text('Chat'),
+          title: const Text('Chat', style: TextStyle(color: Colors.white)),
+          backgroundColor: const Color(0xFF0A0A0A),
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
           actions: [
             PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: Colors.white.withOpacity(0.8)),
+              color: const Color(0xFF1A1A1A),
               onSelected: (value) {
                 if (value == 'rename') {
                   _showRenameDialog();
@@ -169,14 +175,14 @@ class _ChatScreenState extends State<ChatScreen> {
                   _showDeleteDialog();
                 }
               },
-              itemBuilder: (context) => const [
+              itemBuilder: (context) => [
                 PopupMenuItem(
                   value: 'rename',
                   child: Row(
                     children: [
-                      Icon(Icons.edit_outlined),
-                      SizedBox(width: 8),
-                      Text('Edit name & feedback'),
+                      Icon(Icons.edit_outlined, color: Colors.white.withOpacity(0.8)),
+                      const SizedBox(width: 8),
+                      const Text('Edit name & feedback', style: TextStyle(color: Colors.white)),
                     ],
                   ),
                 ),
@@ -184,9 +190,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete conversation'),
+                      const Icon(Icons.delete_outline, color: Colors.red),
+                      const SizedBox(width: 8),
+                      const Text('Delete conversation', style: TextStyle(color: Colors.red)),
                     ],
                   ),
                 ),
@@ -204,12 +210,19 @@ class _ChatScreenState extends State<ChatScreen> {
                   if (snapshot.connectionState ==
                       ConnectionState.waiting) {
                     return const Center(
-                        child: CircularProgressIndicator());
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF6C63FF),
+                      ),
+                    );
                   }
 
                   if (snapshot.hasError) {
                     return Center(
-                        child: Text('Error: ${snapshot.error}'));
+                      child: Text(
+                        'Error: ${snapshot.error}',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    );
                   }
 
                   if (!snapshot.hasData ||
@@ -219,16 +232,18 @@ class _ChatScreenState extends State<ChatScreen> {
                         mainAxisAlignment:
                             MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.waving_hand,
-                              size: 60,
-                              color: AppTheme.primaryColor),
+                          Icon(
+                            Icons.waving_hand,
+                            size: 60,
+                            color: const Color(0xFF6C63FF),
+                          ),
                           const SizedBox(height: 16),
-                          Text(
+                          const Text(
                             'Hi! I\'m Freud',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
+                              color: Colors.white,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -236,7 +251,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             'How can I support you today?',
                             style: TextStyle(
                               fontSize: 16,
-                              color: AppTheme.textSecondary,
+                              color: Colors.white.withOpacity(0.7),
                             ),
                           ),
                         ],
@@ -277,7 +292,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Text(
                   'Freud is typing...',
                   style: TextStyle(
-                      color: AppTheme.textSecondary),
+                    color: Colors.white.withOpacity(0.5),
+                  ),
                 ),
               ),
             ChatInput(
@@ -328,13 +344,25 @@ class _ChatScreenState extends State<ChatScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Conversation'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Delete Conversation',
+          style: TextStyle(color: Colors.white),
+        ),
         content: const Text(
-            'This action cannot be undone.'),
+          'This action cannot be undone.',
+          style: TextStyle(color: Colors.white70),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white.withOpacity(0.7)),
+            ),
           ),
           TextButton(
             onPressed: () async {
@@ -348,8 +376,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 Navigator.pop(context);
               }
             },
-            child: const Text('Delete',
-                style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),

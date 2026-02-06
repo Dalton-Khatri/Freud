@@ -28,7 +28,6 @@ dependencies:
   intl: ^0.18.1
   uuid: ^4.2.2
   shared_preferences: ^2.2.2
-  url_launcher: ^6.2.2
 
   # HTTP (for AI API calls)
   http: ^1.1.2

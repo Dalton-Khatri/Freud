@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import '../../services/firebase_service.dart';
 import '../../utils/theme.dart';
 import 'package:freud_mental_health_ai/screens/auth/login_screen.dart';
@@ -8,27 +9,129 @@ import 'package:freud_mental_health_ai/screens/auth/login_screen.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
+  Future<void> _logMood(BuildContext context, String mood, String emoji) async {
+    final firebaseService = Provider.of<FirebaseService>(context, listen: false);
+    
+    try {
+      await firebaseService.addMoodEntry(mood: mood.toLowerCase());
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Mood logged: $mood $emoji'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to log mood: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteMoodEntry(BuildContext context, int index) async {
+    final firebaseService = Provider.of<FirebaseService>(context, listen: false);
+    
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Delete Mood Entry',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'Are you sure you want to delete this mood entry?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white.withOpacity(0.7)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete == true && context.mounted) {
+      try {
+        await firebaseService.deleteMoodEntry(index);
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Mood entry deleted'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete: $e'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final firebaseService = Provider.of<FirebaseService>(context);
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: const Text('Profile', style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF0A0A0A),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: firebaseService.getUserProfile(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+            );
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: const TextStyle(color: Colors.white),
+              ),
+            );
           }
 
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(child: Text('No profile data found'));
+            return const Center(
+              child: Text(
+                'No profile data found',
+                style: TextStyle(color: Colors.white),
+              ),
+            );
           }
 
           final userData = snapshot.data!.data() as Map<String, dynamic>;
@@ -44,8 +147,12 @@ class ProfileScreen extends StatelessWidget {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF6C63FF), Color(0xFF4338CA)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -53,9 +160,12 @@ class ProfileScreen extends StatelessWidget {
                         width: 100,
                         height: 100,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Colors.white.withOpacity(0.2),
                           shape: BoxShape.circle,
-                          boxShadow: AppTheme.cardShadow,
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.3),
+                            width: 3,
+                          ),
                         ),
                         child: Center(
                           child: Text(
@@ -63,7 +173,7 @@ class ProfileScreen extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 40,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryColor,
+                              color: Colors.white,
                             ),
                           ),
                         ),
@@ -91,41 +201,102 @@ class ProfileScreen extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // Mood Tracking
+                // How are you feeling today?
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
+                        'How are you feeling today?',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Mood Buttons
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF111111),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.05),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildMoodButton(context, '😊', 'Happy'),
+                            _buildMoodButton(context, '😌', 'Calm'),
+                            _buildMoodButton(context, '😔', 'Sad'),
+                            _buildMoodButton(context, '😰', 'Anxious'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Recent Moods
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
                         'Recent Moods',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
+                          color: Colors.white.withOpacity(0.9),
                         ),
                       ),
                       const SizedBox(height: 16),
                       
                       if (moodTracking.isEmpty)
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Center(
-                              child: Text(
-                                'No mood entries yet',
-                                style: TextStyle(color: AppTheme.textSecondary),
-                              ),
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF111111),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.05),
+                            ),
+                          ),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.sentiment_satisfied_alt,
+                                  size: 48,
+                                  color: Colors.white.withOpacity(0.2),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'No mood entries yet',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.4),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         )
                       else
-                        ...moodTracking.reversed.take(5).map((mood) {
-                          final moodData = mood as Map<String, dynamic>;
+                        ...moodTracking.reversed.take(5).map((entry) {
+                          final index = moodTracking.indexOf(entry);
                           return _buildMoodCard(
-                            moodData['mood'] ?? 'unknown',
-                            moodData['note'] ?? '',
-                            moodData['date'] as Timestamp?,
+                            context,
+                            entry['mood'] ?? '',
+                            entry['note'] ?? '',
+                            entry['date'] as Timestamp?,
+                            index,
                           );
                         }).toList(),
                     ],
@@ -140,12 +311,12 @@ class ProfileScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Settings',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
+                          color: Colors.white.withOpacity(0.9),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -155,47 +326,27 @@ class ProfileScreen extends StatelessWidget {
                         title: 'Notifications',
                         trailing: Switch(
                           value: preferences['notificationsEnabled'] ?? true,
+                          activeColor: const Color(0xFF6C63FF),
                           onChanged: (value) async {
                             await firebaseService.updatePreferences({
                               ...preferences,
                               'notificationsEnabled': value,
                             });
                           },
-                          activeThumbColor: AppTheme.primaryColor,
                         ),
                       ),
                       
                       _buildSettingsTile(
                         icon: Icons.mic_outlined,
-                        title: 'Voice Enabled',
+                        title: 'Voice Mode',
                         trailing: Switch(
                           value: preferences['voiceEnabled'] ?? false,
+                          activeColor: const Color(0xFF6C63FF),
                           onChanged: (value) async {
                             await firebaseService.updatePreferences({
                               ...preferences,
                               'voiceEnabled': value,
                             });
-                          },
-                          activeThumbColor: AppTheme.primaryColor,
-                        ),
-                      ),
-                      
-                      _buildSettingsTile(
-                        icon: Icons.palette_outlined,
-                        title: 'Theme',
-                        trailing: DropdownButton<String>(
-                          value: preferences['theme'] ?? 'light',
-                          items: const [
-                            DropdownMenuItem(value: 'light', child: Text('Light')),
-                            DropdownMenuItem(value: 'dark', child: Text('Dark')),
-                          ],
-                          onChanged: (value) async {
-                            if (value != null) {
-                              await firebaseService.updatePreferences({
-                                ...preferences,
-                                'theme': value,
-                              });
-                            }
                           },
                         ),
                       ),
@@ -216,16 +367,32 @@ class ProfileScreen extends StatelessWidget {
                         final shouldLogout = await showDialog<bool>(
                           context: context,
                           builder: (context) => AlertDialog(
-                            title: const Text('Logout'),
-                            content: const Text('Are you sure you want to logout?'),
+                            backgroundColor: const Color(0xFF1A1A1A),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            title: const Text(
+                              'Logout',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            content: const Text(
+                              'Are you sure you want to logout?',
+                              style: TextStyle(color: Colors.white70),
+                            ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel'),
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                                ),
                               ),
                               TextButton(
                                 onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Logout'),
+                                child: const Text(
+                                  'Logout',
+                                  style: TextStyle(color: Color(0xFF6C63FF)),
+                                ),
                               ),
                             ],
                           ),
@@ -245,8 +412,11 @@ class ProfileScreen extends StatelessWidget {
                       icon: const Icon(Icons.logout),
                       label: const Text('Logout'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.errorColor,
-                        side: const BorderSide(color: AppTheme.errorColor),
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
@@ -261,56 +431,100 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMoodCard(String mood, String note, Timestamp? timestamp) {
+  Widget _buildMoodButton(BuildContext context, String emoji, String label) {
+    return GestureDetector(
+      onTap: () => _logMood(context, label, emoji),
+      child: Column(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 32)),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMoodCard(
+    BuildContext context,
+    String mood,
+    String note,
+    Timestamp? timestamp,
+    int index,
+  ) {
     final color = AppTheme.moodColors[mood.toLowerCase()] ?? AppTheme.borderColor;
     
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(
-                  _getMoodEmoji(mood),
-                  style: const TextStyle(fontSize: 24),
-                ),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111111),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.05),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Text(
+                _getMoodEmoji(mood),
+                style: const TextStyle(fontSize: 24),
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  mood.toUpperCase(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                if (note.isNotEmpty) ...[
+                  const SizedBox(height: 4),
                   Text(
-                    mood.toUpperCase(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
+                    note,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withOpacity(0.5),
                     ),
                   ),
-                  if (note.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      note,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                  ],
                 ],
-              ),
+                if (timestamp != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatDateTime(timestamp),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.3),
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ],
-        ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            onPressed: () => _deleteMoodEntry(context, index),
+          ),
+        ],
       ),
     );
   }
@@ -320,12 +534,31 @@ class ProfileScreen extends StatelessWidget {
     required String title,
     required Widget trailing,
   }) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: Icon(icon, color: AppTheme.primaryColor),
-        title: Text(title),
-        trailing: trailing,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111111),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.05),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF6C63FF)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+              ),
+            ),
+          ),
+          trailing,
+        ],
       ),
     );
   }
@@ -348,6 +581,22 @@ class ProfileScreen extends StatelessWidget {
         return '😇';
       default:
         return '😐';
+    }
+  }
+
+  String _formatDateTime(Timestamp timestamp) {
+    final date = timestamp.toDate();
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return 'Today at ${DateFormat('HH:mm').format(date)}';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday at ${DateFormat('HH:mm').format(date)}';
+    } else if (difference.inDays < 7) {
+      return DateFormat('EEEE \'at\' HH:mm').format(date);
+    } else {
+      return DateFormat('MMM d, yyyy \'at\' HH:mm').format(date);
     }
   }
 }

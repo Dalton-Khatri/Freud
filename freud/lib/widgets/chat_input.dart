@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../utils/theme.dart';
 
@@ -40,14 +39,13 @@ class _ChatInputState extends State<ChatInput> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+        color: const Color(0xFF111111),
+        border: Border(
+          top: BorderSide(
+            color: Colors.white.withOpacity(0.05),
+            width: 1,
           ),
-        ],
+        ),
       ),
       child: SafeArea(
         top: false,
@@ -56,17 +54,21 @@ class _ChatInputState extends State<ChatInput> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppTheme.backgroundColor,
+                  color: const Color(0xFF1A1A1A),
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.05),
+                  ),
                 ),
                 child: TextField(
                   controller: _controller,
                   enabled: widget.enabled,
                   maxLines: null,
                   textCapitalization: TextCapitalization.sentences,
+                  style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: 'Share your thoughts...',
-                    hintStyle: TextStyle(color: AppTheme.textLight),
+                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -88,7 +90,7 @@ class _ChatInputState extends State<ChatInput> {
                     : null,
                 color: _hasText && widget.enabled
                     ? null
-                    : AppTheme.borderColor,
+                    : Colors.white.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: IconButton(

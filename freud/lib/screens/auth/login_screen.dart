@@ -38,13 +38,9 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       
-      // Success
-      print('Login successful - waiting for auth state update');
-      
       if (mounted) {
         await Future.delayed(const Duration(milliseconds: 500));
         
-        print('Manually navigating to HomeScreen');
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
           (route) => false,
@@ -52,7 +48,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       
     } on Exception catch (e) {
-      // Extract the error message from Exception
       String errorMessage = e.toString().replaceFirst('Exception: ', '');
       
       if (mounted) {
@@ -84,6 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -95,17 +91,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 60),
                 
                 // Icon
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.psychology_outlined,
-                    size: 50,
-                    color: Colors.white,
+                Center(
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
+                      shape: BoxShape.circle,
+                      boxShadow: AppTheme.purpleGlow,
+                    ),
+                    child: const Icon(
+                      Icons.psychology_outlined,
+                      size: 50,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
                 
@@ -116,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   'Welcome to Freud',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
+                    color: Colors.white,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -126,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Your AI companion for mental wellness',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.textSecondary,
+                    color: Colors.white.withOpacity(0.7),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -137,9 +136,29 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
                     labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
+                    labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    prefixIcon: Icon(Icons.email_outlined, color: Colors.white.withOpacity(0.5)),
+                    filled: true,
+                    fillColor: const Color(0xFF111111),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red),
+                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -158,12 +177,33 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
+                  style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    prefixIcon: Icon(Icons.lock_outline, color: Colors.white.withOpacity(0.5)),
+                    filled: true,
+                    fillColor: const Color(0xFF111111),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red),
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.white.withOpacity(0.5),
                       ),
                       onPressed: () {
                         setState(() => _obscurePassword = !_obscurePassword);
@@ -188,6 +228,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 56,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _handleLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6C63FF),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      disabledBackgroundColor: const Color(0xFF6C63FF).withOpacity(0.5),
+                    ),
                     child: _isLoading
                         ? const SizedBox(
                             width: 24,
@@ -215,7 +264,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Text(
                       "Don't have an account? ",
-                      style: TextStyle(color: AppTheme.textSecondary),
+                      style: TextStyle(color: Colors.white.withOpacity(0.7)),
                     ),
                     TextButton(
                       onPressed: () {
@@ -226,7 +275,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         );
                       },
-                      child: const Text('Sign Up'),
+                      child: const Text(
+                        'Sign Up',
+                        style: TextStyle(
+                          color: Color(0xFF6C63FF),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -237,14 +292,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppTheme.infoColor.withOpacity(0.1),
+                    color: const Color(0xFF6C63FF).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF6C63FF).withOpacity(0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
                       Icon(
                         Icons.lock_outline,
-                        color: AppTheme.infoColor,
+                        color: const Color(0xFF6C63FF),
                         size: 20,
                       ),
                       const SizedBox(width: 12),
@@ -252,7 +310,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Text(
                           'Your conversations are private and encrypted',
                           style: TextStyle(
-                            color: AppTheme.infoColor,
+                            color: const Color(0xFF6C63FF),
                             fontSize: 13,
                           ),
                         ),

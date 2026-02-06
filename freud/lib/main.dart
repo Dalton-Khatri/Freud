@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: AppTheme.lightColorScheme,
+          colorScheme: AppTheme.darkColorScheme,
           textTheme: GoogleFonts.interTextTheme(),
           scaffoldBackgroundColor: AppTheme.backgroundColor,
           appBarTheme: AppBarTheme(

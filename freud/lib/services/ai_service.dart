@@ -1,22 +1,16 @@
-// lib/services/ai_service.dart
-// FOR FASTAPI BACKEND
-
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AIService {
-  // Your backend URL (FastAPI endpoint hosted on HF Space)
   static const String backendUrl = 'https://dalton-khatri-freud-ai.hf.space';
-
   static const int timeout = 60;
   static const bool debugMode = true;
 
-  // Crisis handling
   static const String _crisisMessage = """
 I'm concerned about what you're sharing. Please know that you're not alone, and there are people who can help immediately.
 
-🆘 Nepal Crisis Helplines:
+Nepal Crisis Helplines:
 • National Mental Health Helpline: 1660 0102005
 • Transcultural Psychosocial Organization (TPO): 9840021600
 • Centre for Mental Health and Counselling (CMC): 01-4102037
@@ -100,7 +94,7 @@ I'm here to support you, but professional help is crucial right now. Please cons
       final prompt = _buildPrompt(context);
 
       if (debugMode) {
-        print('📤 Sending to: $backendUrl/generate');
+        print('Sending to: $backendUrl/generate');
       }
 
       // Call FastAPI endpoint
@@ -115,8 +109,8 @@ I'm here to support you, but professional help is crucial right now. Please cons
       ).timeout(Duration(seconds: timeout));
 
       if (debugMode) {
-        print('📥 Status: ${response.statusCode}');
-        print('📥 Body: ${response.body}');
+        print('Status: ${response.statusCode}');
+        print('Body: ${response.body}');
       }
 
       if (response.statusCode == 200) {
@@ -132,14 +126,14 @@ I'm here to support you, but professional help is crucial right now. Please cons
       } else if (response.statusCode == 503) {
         return "I'm waking up! Please try again in a moment.";
       } else {
-        print('❌ Error ${response.statusCode}');
+        print('Error ${response.statusCode}');
         return _getFallbackResponse(context);
       }
 
     } on TimeoutException {
       return "I'm taking longer than usual. Please try again.";
     } catch (e) {
-      print('💥 Error: $e');
+      print('Error: $e');
       return _getFallbackResponse(context);
     }
   }
