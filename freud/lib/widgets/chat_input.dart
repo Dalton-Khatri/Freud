@@ -39,7 +39,7 @@ class _ChatInputState extends State<ChatInput> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF111111),
+        color: const Color(0xFF0A0A0A), // Deep black background
         border: Border(
           top: BorderSide(
             color: Colors.white.withOpacity(0.05),
@@ -54,10 +54,11 @@ class _ChatInputState extends State<ChatInput> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A1A),
+                  color: const Color(0xFF1A1A1A), // Dark input field background
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withOpacity(0.1),
+                    width: 1,
                   ),
                 ),
                 child: TextField(
@@ -65,14 +66,24 @@ class _ChatInputState extends State<ChatInput> {
                   enabled: widget.enabled,
                   maxLines: null,
                   textCapitalization: TextCapitalization.sentences,
-                  style: const TextStyle(color: Colors.white),
+                  cursorColor: const Color(0xFF6C63FF), // Purple cursor
+                  style: const TextStyle(
+                    color: Colors.white, // White text
+                    fontSize: 15,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Share your thoughts...',
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                    hintStyle: TextStyle(
+                      color: Colors.white.withOpacity(0.4),
+                      fontSize: 15,
+                    ),
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false, // Don't override with theme
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 20,
-                      vertical: 12,
+                      vertical: 14,
                     ),
                   ),
                   onChanged: (text) {
@@ -82,7 +93,7 @@ class _ChatInputState extends State<ChatInput> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             Container(
               decoration: BoxDecoration(
                 gradient: _hasText && widget.enabled
@@ -97,6 +108,7 @@ class _ChatInputState extends State<ChatInput> {
                 onPressed: _hasText && widget.enabled ? _handleSend : null,
                 icon: const Icon(Icons.send_rounded),
                 color: Colors.white,
+                iconSize: 22,
               ),
             ),
           ],
