@@ -37,6 +37,7 @@ I'm here to support you, but professional help is crucial right now. Please cons
   String _detectEmotion(String message) {
     final lowerMessage = message.toLowerCase();
 
+    // Emotion detection (same as before - works well!)
     if (lowerMessage.contains(RegExp(r'\b(sad|lonely|empty|depressed|down|hopeless|cry|tears)\b'))) {
       return 'sad';
     }
@@ -58,8 +59,13 @@ I'm here to support you, but professional help is crucial right now. Please cons
   String _buildPrompt(List<Map<String, dynamic>> context) {
     final StringBuffer prompt = StringBuffer();
 
-    prompt.writeln('<|system|>: You are Freud, a calm, empathetic therapeutic AI assistant.');
+    // Enhanced system prompt with clear boundaries
+    prompt.writeln('<|system|>: You are Freud, a calm, empathetic therapeutic AI assistant. '
+        'You respond thoughtfully, kindly, and supportively. '
+        'You ask gentle follow-up questions and never judge the user. '
+        'Respond in 1-3 sentences only. Do not continue the conversation or add user responses.');
 
+    // Build conversation history (last 10 messages)
     for (var message in context.take(10)) {
       final role = message['role'];
       final content = message['content'];
@@ -75,8 +81,71 @@ I'm here to support you, but professional help is crucial right now. Please cons
       }
     }
 
+    // Add final assistant tag
     prompt.write('<|assistant|>:\n');
     return prompt.toString();
+  }
+
+  bool _isValidResponse(String response) {
+    // Enhanced validation to catch tag leakage
+    
+    // Check for empty or too short
+    if (response.isEmpty || response.trim().length < 10) {
+      return false;
+    }
+
+    // Check for tag leakage (critical issue from testing)
+    if (response.contains('<|user|>') || 
+        response.contains('<^user|>') ||
+        response.contains('<|assistant|>') ||
+        response.contains('<|system|>')) {
+      if (debugMode) print(' Validation failed: Tag leakage detected');
+      return false;
+    }
+
+    // Check for emotion tag leakage
+    if (response.contains('[emotion:')) {
+      if (debugMode) print(' Validation failed: Emotion tag detected');
+      return false;
+    }
+
+    // Check for special markers
+    if (RegExp(r'\*\|[a-z]+\d*\|').hasMatch(response)) {
+      if (debugMode) print(' Validation failed: Special markers detected');
+      return false;
+    }
+
+    // Check for excessive punctuation (gibberish)
+    if (response.replaceAll(RegExp(r'[^!]'), '').length > 10) {
+      if (debugMode) print(' Validation failed: Excessive exclamation marks');
+      return false;
+    }
+
+    // Check for error messages
+    if (response.toLowerCase().startsWith('error')) {
+      return false;
+    }
+
+    // All checks passed
+    return true;
+  }
+
+  String _cleanResponse(String response) {
+    // Additional client-side cleaning as safety net
+    String cleaned = response;
+
+    // Remove any remaining tags (just in case backend missed them)
+    cleaned = cleaned.replaceAll(RegExp(r'<\|.*?\|>:?'), '');
+    cleaned = cleaned.replaceAll(RegExp(r'<\^.*?\|>:?'), '');
+    cleaned = cleaned.replaceAll(RegExp(r'\[emotion:\s*\w+\]', caseSensitive: false), '');
+    
+    // Remove role labels
+    cleaned = cleaned.replaceAll(RegExp(r'^(User:|Assistant:|Freud:|System:)\s*', multiLine: true), '');
+    
+    // Clean up whitespace
+    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
+    
+    return cleaned;
   }
 
   Future<String> generateResponse(List<Map<String, dynamic>> context) async {
@@ -86,7 +155,7 @@ I'm here to support you, but professional help is crucial right now. Please cons
         orElse: () => {'content': ''},
       )['content'] as String;
 
-      // Crisis check
+      // Crisis check (keep this - works well!)
       if (detectCrisis(lastUserMessage)) {
         return _crisisMessage;
       }
@@ -94,7 +163,8 @@ I'm here to support you, but professional help is crucial right now. Please cons
       final prompt = _buildPrompt(context);
 
       if (debugMode) {
-        print('Sending to: $backendUrl/generate');
+        print(' Sending to: $backendUrl/generate');
+        print(' Prompt length: ${prompt.length} chars');
       }
 
       // Call FastAPI endpoint
@@ -109,16 +179,38 @@ I'm here to support you, but professional help is crucial right now. Please cons
       ).timeout(Duration(seconds: timeout));
 
       if (debugMode) {
-        print('Status: ${response.statusCode}');
-        print('Body: ${response.body}');
+        print(' Response status: ${response.statusCode}');
       }
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         String generatedText = data['response'] ?? '';
 
-        if (generatedText.isEmpty || generatedText.startsWith('Error:')) {
+        if (debugMode) {
+          print(' Raw response: ${generatedText.substring(0, generatedText.length < 100 ? generatedText.length : 100)}...');
+        }
+
+        // Additional client-side cleaning
+        generatedText = _cleanResponse(generatedText);
+
+        // Validate response quality
+        if (!_isValidResponse(generatedText)) {
+          if (debugMode) {
+            print('Response failed validation, using fallback');
+          }
           return _getFallbackResponse(context);
+        }
+
+        // Check for empty response
+        if (generatedText.isEmpty || generatedText.startsWith('Error:')) {
+          if (debugMode) {
+            print(' Empty or error response, using fallback');
+          }
+          return _getFallbackResponse(context);
+        }
+
+        if (debugMode) {
+          print(' Response validated successfully');
         }
 
         return generatedText;
@@ -126,19 +218,27 @@ I'm here to support you, but professional help is crucial right now. Please cons
       } else if (response.statusCode == 503) {
         return "I'm waking up! Please try again in a moment.";
       } else {
-        print('Error ${response.statusCode}');
+        if (debugMode) {
+          print(' HTTP Error ${response.statusCode}');
+        }
         return _getFallbackResponse(context);
       }
 
     } on TimeoutException {
+      if (debugMode) {
+        print(' Request timed out');
+      }
       return "I'm taking longer than usual. Please try again.";
     } catch (e) {
-      print('Error: $e');
+      if (debugMode) {
+        print('Error: $e');
+      }
       return _getFallbackResponse(context);
     }
   }
 
   String _getFallbackResponse(List<Map<String, dynamic>> context) {
+    
     if (context.isEmpty) {
       return "Hello! I'm Freud, your AI companion for mental wellness. I'm here to listen and support you. How are you feeling today?";
     }

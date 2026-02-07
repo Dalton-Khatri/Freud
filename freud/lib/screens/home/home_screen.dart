@@ -541,19 +541,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       children: [
                         Icon(
                           Icons.psychology_outlined,
-                          size: 36,
+                          size: 50,
                           color: Colors.white.withOpacity(0.9),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          'LOGO',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.white.withOpacity(0.6),
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
+        
                       ],
                     ),
                   ),

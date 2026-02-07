@@ -132,14 +132,14 @@ class _MessageBubbleState extends State<MessageBubble> {
             ),
           ),
 
-          // User Avatar (User's Initial)
+          // User Avatar (User's Initial with Purple Gradient)
           if (widget.isUser) ...[
             const SizedBox(width: 12),
             Container(
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: AppTheme.accentColor,
+                gradient: AppTheme.primaryGradient,
                 shape: BoxShape.circle,
               ),
               child: Center(

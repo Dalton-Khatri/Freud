@@ -19,14 +19,19 @@ class CrisisAlertDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      backgroundColor: const Color(0xFF0A0A0A),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
       ),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 400),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF0A0A0A),
           borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.1),
+            width: 1,
+          ),
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -36,7 +41,14 @@ class CrisisAlertDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: AppTheme.errorColor.withOpacity(0.1),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.errorColor.withOpacity(0.3),
+                      AppTheme.errorColor.withOpacity(0.2),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(24),
                     topRight: Radius.circular(24),
@@ -50,6 +62,10 @@ class CrisisAlertDialog extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppTheme.errorColor.withOpacity(0.2),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppTheme.errorColor.withOpacity(0.3),
+                          width: 2,
+                        ),
                       ),
                       child: Icon(
                         Icons.warning_rounded,
@@ -63,7 +79,7 @@ class CrisisAlertDialog extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                        color: Colors.white,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -72,7 +88,7 @@ class CrisisAlertDialog extends StatelessWidget {
                       'You\'re not alone. Professional help is available.',
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppTheme.textSecondary,
+                        color: Colors.white.withOpacity(0.7),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -109,7 +125,7 @@ class CrisisAlertDialog extends StatelessWidget {
                               'If you\'re in immediate danger, please call emergency services or reach out to someone you trust.',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: AppTheme.textPrimary,
+                                color: Colors.white.withOpacity(0.9),
                                 height: 1.4,
                               ),
                             ),
@@ -126,7 +142,7 @@ class CrisisAlertDialog extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                        color: Colors.white,
                       ),
                     ),
 
@@ -167,7 +183,7 @@ class CrisisAlertDialog extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                        color: Colors.white,
                       ),
                     ),
 
@@ -205,11 +221,19 @@ class CrisisAlertDialog extends StatelessWidget {
                         onPressed: () => Navigator.pop(context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          elevation: 0,
                         ),
-                        child: const Text('I Understand'),
+                        child: const Text(
+                          'I Understand',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -235,9 +259,11 @@ class CrisisAlertDialog extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: const Color(0xFF111111),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(
+            color: color.withOpacity(0.3),
+          ),
         ),
         child: Row(
           children: [
@@ -260,7 +286,7 @@ class CrisisAlertDialog extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -275,7 +301,7 @@ class CrisisAlertDialog extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.copy, color: color, size: 20),
+            Icon(Icons.copy, color: color.withOpacity(0.7), size: 20),
           ],
         ),
       ),
@@ -294,9 +320,11 @@ class CrisisAlertDialog extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.errorColor.withOpacity(0.1),
+          color: const Color(0xFF111111),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.errorColor.withOpacity(0.3)),
+          border: Border.all(
+            color: AppTheme.errorColor.withOpacity(0.3),
+          ),
         ),
         child: Column(
           children: [
@@ -307,7 +335,7 @@ class CrisisAlertDialog extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: 4),
