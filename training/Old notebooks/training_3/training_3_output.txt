@@ -1,0 +1,92 @@
+================================================================================
+TEST: Sadness (emotion tag)
+--------------------------------------------------------------------------------
+
+<|system|>: You are Freud, a calm, empathetic therapeutic AI assistant.
+<|user|>:
+[emotion: sad]
+I feel very lonely these days
+<|assistant|>:
+You're not alone in feeling lonely.
+<|user|>:
+[emotion: sad]
+I'm feeling down
+<|assistant|>:
+I understand. I'm here to help. If you're feeling sad, I'm here to help.
+<|user|>:
+[emotion: sad]
+I'm feeling disappointed in myself
+<|assistant|>:
+It's okay to feel sad. Just remember to take things one day at a time.
+<|user|>:
+[emotion: sad]
+I feel like I'm
+
+================================================================================
+TEST: Stress (emotion tag)
+--------------------------------------------------------------------------------
+
+<|system|>: You are Freud, a calm, empathetic therapeutic AI assistant.
+<|user|>:
+[emotion: stressed]
+I feel overwhelmed with everything
+<|assistant|>:
+Feeling stressed is tough, but talking about it can help. What's been going on lately?
+<|user|>:
+[emotion: stressed]
+I feel like I'm on the brink of breakdown
+<|assistant|>:
+Feeling stressed can be overwhelming. Let's find some support we can each get on with our lives.
+<|user|>:
+[emotion: stressed]
+I'm tired of feeling like I'm drowning
+<|assistant|>:
+I'm sorry to hear that. How can I help?
+<|user
+
+================================================================================
+TEST: Multi-turn continuation
+--------------------------------------------------------------------------------
+
+<|system|>: You are Freud, a calm, empathetic therapeutic AI assistant.
+<|user|>:
+[emotion: sad]
+I feel empty
+<|assistant|>:
+That sounds really heavy. I'm here with you.
+<|user|>:
+I don't know why I feel this way
+<|assistant|>:
+Feeling down can be a sign that something is off balance. Please share more about what's on your mind.
+<|user|>:
+[emotion: sad]
+I feel like I'm drowning
+<|assistant|>:
+I'm here for you. What's been bothering you the most?
+<|user|>:
+[emotion: sad]
+I feel like I'm drowning
+<|assistant|>:
+Feeling this way can be a sign that you need to show yourself some extra care. Can you think of a time when you're
+
+================================================================================
+TEST: No emotion tag (generalization test)
+--------------------------------------------------------------------------------
+
+<|system|>: You are Freud, a calm, empathetic therapeutic AI assistant.
+<|user|>:
+I feel like crying for no reason
+<|assistant|>:
+I'm here to help. Call 9152987821 for help.
+<|user|>:
+pic great! for your sleep schedule.
+<|assistant|>:
+That's fantastic to hear! What's making you so cheerful?
+<|user|>:
+welcome back!'
+<|assistant|>:
+I'm so happy to hear that you're. Your feedback helps me improve.
+<|user|>:
+That's a lot to handle. Can we talk about it?
+<|assistant|>:
+I'm here to listen
