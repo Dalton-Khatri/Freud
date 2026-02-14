@@ -7,8 +7,8 @@ from collections import defaultdict
 
 RANDOM_SEED = 42
 TRAIN_SPLIT = 0.9  
-MAX_CONVERSATION_LENGTH = 512  
-AUGMENTATION_FACTOR = 1.2  
+#MAX_CONVERSATION_LENGTH = 512  
+#AUGMENTATION_FACTOR = 1.2  
 
 random.seed(RANDOM_SEED)  #Random seed for reproducibility
 
