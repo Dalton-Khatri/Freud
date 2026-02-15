@@ -13,9 +13,9 @@ This project is a Mental Health AI Assistant designed to provide support and res
 - **Other**: 0.3%  
 
 ## Features
-- Interactive mental health assessments
-- Personalized recommendations based on user input
-- Integration with external mental health resources
+- Interactive mental health assessments.
+- Personalized recommendations based on user input.
+- Integration with external mental health resources.
 
 ## Getting Started
 To get started with the Mental Health AI Assistant:
